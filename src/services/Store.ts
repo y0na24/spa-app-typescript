@@ -1,27 +1,21 @@
 import { Shoe } from "../shared/types";
 
 export const enum StoreValues {
-  CART = "cart",
   SHOES = "shoes",
 }
 
 export const enum StoreEvents {
-  CART_CHANGES = "CART_CHANGES",
   SHOES_CHANGES = "SHOES_CHANGES",
 }
 
-interface State {
-  cart: any;
+export interface State {
   shoes: Shoe[];
 }
 
 export class Store {
   static instance: Store;
 
-  state: State = {
-    cart: [],
-    shoes: [],
-  };
+  shoes: Shoe[] = [];
 
   private constructor() {}
 
@@ -32,29 +26,43 @@ export class Store {
 
     return Store.instance;
   }
+
+  public addItemInCart(id: Shoe["id"]) {
+    const targetShoe = this.shoes.find((shoe) => shoe.id === id);
+
+    if (!targetShoe) return console.error("Не удалось найти id");
+
+    this.shoes = [...this.shoes, targetShoe];
+  }
+
+  public getShoesInCart() {
+    return this.shoes.filter((shoe) => shoe.isInCart);
+  }
+
+  public getShoesInCartLength() {
+    return this.getShoesInCart().length;
+  }
 }
 
-export const reactiveState = new Proxy(Store.init().state, {
-  set(target: Store["state"], prop: StoreValues, value) {
+export const reactiveStore = new Proxy(Store.init(), {
+  set(target: Store, prop: StoreValues, value) {
     target[prop] = value;
 
     const events: Record<StoreValues, StoreEvents> = {
-      [StoreValues.CART]: StoreEvents.CART_CHANGES,
       [StoreValues.SHOES]: StoreEvents.SHOES_CHANGES,
     };
 
-    console.log(events[prop]);
     events[prop] && dispatchEvent(new Event(events[prop]));
 
     return true;
   },
 });
 
-export const subscribeWithCleanUp = (
+export const subscribe = (
   event: StoreEvents,
-  listener: Parameters<typeof addEventListener>["1"],
+  listener: (store: Store) => void,
 ) => {
-  window.addEventListener(event, listener);
+  window.addEventListener(event, () => listener(reactiveStore));
 
-  return () => window.removeEventListener(event, listener);
+  return reactiveStore;
 };

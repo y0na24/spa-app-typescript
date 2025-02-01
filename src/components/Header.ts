@@ -1,4 +1,4 @@
-import { Component } from "../services/Component";
+import { Component } from "../shared/ui/Component";
 import { Navbar } from "./Navbar";
 
 export class Header extends Component {

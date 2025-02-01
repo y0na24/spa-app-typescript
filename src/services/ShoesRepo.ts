@@ -4,9 +4,9 @@ import { Store } from "./Store";
 export class ShoesRepo {
   static instance: ShoesRepo;
 
-  constructor(private state: Store["state"]) {}
+  constructor(private state: Store) {}
 
-  public static init(state: Store["state"]) {
+  public static init(state: Store) {
     if (!ShoesRepo.instance) {
       ShoesRepo.instance = new ShoesRepo(state);
     }

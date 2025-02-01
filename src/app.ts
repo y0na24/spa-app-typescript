@@ -4,7 +4,7 @@ import { Router, ROUTER_PATHS } from "./services/Router";
 
 import "./app.css";
 import { CartPage } from "./pages/CartPage";
-import { reactiveState, Store } from "./services/Store";
+import { reactiveStore, Store } from "./services/Store";
 import { ShoesRepo } from "./services/ShoesRepo";
 
 interface AppRepositories {
@@ -14,7 +14,7 @@ interface AppRepositories {
 interface AppDeps {
   root: HTMLElement;
   router: Router;
-  state: Store["state"];
+  store: Store;
   repositories: AppRepositories;
 }
 
@@ -30,10 +30,7 @@ class App {
   private initRouter() {
     const { router, root } = this.deps;
 
-    router.handleRoute(
-      ROUTER_PATHS.HOME,
-      new HomePage(root, reactiveState).render(),
-    );
+    router.handleRoute(ROUTER_PATHS.HOME, new HomePage(root).render());
     router.handleRoute(ROUTER_PATHS.CART, new CartPage(root).render());
 
     router.init();
@@ -54,9 +51,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const appDeps: AppDeps = {
     root,
     router,
-    state: reactiveState,
+    store: reactiveStore,
     repositories: {
-      shoesRepository: ShoesRepo.init(reactiveState),
+      shoesRepository: ShoesRepo.init(reactiveStore),
     },
   };
 

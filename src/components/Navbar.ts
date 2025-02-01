@@ -1,10 +1,19 @@
-import { Component } from "../services/Component";
+import { Component } from "../shared/ui/Component";
 import { ROUTER_PATHS } from "../services/Router";
 import { parseFromHtmlStr } from "../shared/parseFromHtmlStr";
+import { Store, StoreEvents, subscribe } from "../services/Store";
 
 export class Navbar extends Component {
+  private store: Store;
+
   constructor() {
     super("nav", "navbar");
+
+    this.store = subscribe(StoreEvents.SHOES_CHANGES, (store) => {
+      const badge = this.element.querySelector(".badge")!;
+
+      badge.textContent = String(store.getShoesInCartLength());
+    });
   }
 
   private createElement() {
