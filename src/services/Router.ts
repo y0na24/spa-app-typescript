@@ -1,52 +1,62 @@
-import { Page } from "./Page";
+// 1. Регистрация роута (endpoint + нужная страница)
+// 2. Изменение состояния браузера (работа с history api)
+// 3. Рендеринг нужной страницы после очистки root-node'ы
+// 4. Обработка клика на навигацию с последующим редиректом на нужную страницу
 
-export const ROUTER_PATHS = {
-  HOME: "/",
-  CART: "/cart",
-} as const;
-
-type Routes = typeof ROUTER_PATHS;
-type Route = Routes[keyof Routes];
+import { parseFromHtmlStr } from "../shared/parseFromHtmlStr";
+import { isRoute, Route, ROUTER_PATHS } from "../shared/routes";
+import { Page } from "../shared/ui/Page";
 
 export class Router {
-  private currentPage: HTMLElement | null = null;
-  private routes: Record<string, Page["element"]> = {};
+  routes = {} as Record<Route, Page["element"]>;
 
   constructor(private root: HTMLElement) {}
 
   public init() {
-    document.querySelectorAll("a.navlink").forEach((el) => {
-      el.addEventListener("click", (e) => {
+    document.querySelectorAll("a.navlink").forEach((link) => {
+      link.addEventListener("click", (e) => {
         e.preventDefault();
-        const link = e.target as HTMLAnchorElement;
 
-        const path = link.getAttribute("href") ?? "";
+        const endpoint = link.getAttribute("href") ?? "";
 
-        this.currentPage;
-        this.goTo(path);
+        this.goTo(endpoint);
       });
     });
+    
+    window.addEventListener("popstate", (e) => {
+      e.preventDefault()
+      
+      this.goTo(e.state.str, false)
+    })
 
     this.goTo(location.pathname);
   }
 
-  public handleRoute(path: string, page: Page["element"]) {
-    this.routes[path] = page;
+  public registerRoute(route: Route, pageEl: Page["element"]) {
+    this.routes[route] = pageEl;
   }
 
-  private goTo(path: string) {
-    console.log(`Перешли на ${path}`);
+  private goTo(str: string, addHistory = true) {
+    if (!isRoute(str)) {
+      const errorPage =
+        this.routes[ROUTER_PATHS.NOT_FOUND] ??
+        parseFromHtmlStr("<h1>Ошибка</h1>");
 
-    history.pushState({}, "", path);
+      return this.renderPage(errorPage);
+    }
 
-    const template = this.routes[path] ?? document.createElement("h1");
+    if (addHistory) {
+      history.pushState({ str }, "", str);
+    }
+
+    const template = this.routes[str];
 
     this.renderPage(template);
   }
 
-  private renderPage(pageTemplate: HTMLElement) {
+  private renderPage(template: Page["element"]) {
     this.root.innerHTML = "";
-    this.currentPage = pageTemplate;
-    this.root.appendChild(pageTemplate);
+
+    this.root.append(template);
   }
 }

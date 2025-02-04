@@ -1,61 +1,32 @@
 import { Header } from "./components/Header";
-import { HomePage } from "./pages/HomePage";
-import { Router, ROUTER_PATHS } from "./services/Router";
-
-import "./app.css";
+import "./global.css";
 import { CartPage } from "./pages/CartPage";
-import { reactiveStore, Store } from "./services/Store";
-import { ShoesRepo } from "./services/ShoesRepo";
-
-interface AppRepositories {
-  shoesRepository: ShoesRepo;
-}
-
-interface AppDeps {
-  root: HTMLElement;
-  router: Router;
-  store: Store;
-  repositories: AppRepositories;
-}
+import { HomePage } from "./pages/HomePage";
+import { Router } from "./services/Router";
+import { ROUTER_PATHS } from "./shared/routes";
 
 class App {
-  constructor(private deps: AppDeps) {}
+  root: HTMLElement;
+  router: Router;
 
-  private async fetchInitialData() {
-    const { shoesRepository } = this.deps.repositories;
-
-    await shoesRepository.getShoes();
+  constructor() {
+    document.body.prepend(new Header().render());
+    this.root = document.getElementById("app")!;
+    this.router = new Router(this.root);
   }
 
   private initRouter() {
-    const { router, root } = this.deps;
-
-    router.handleRoute(ROUTER_PATHS.HOME, new HomePage(root).render());
-    router.handleRoute(ROUTER_PATHS.CART, new CartPage(root).render());
-
-    router.init();
+    this.router.registerRoute(ROUTER_PATHS.HOME, new HomePage(this.root).render())
+    this.router.registerRoute(ROUTER_PATHS.CART, new CartPage(this.root).render())
+    
+    this.router.init()
   }
 
-  public async run() {
-    this.initRouter();
-    await this.fetchInitialData();
+  public run() {
+    this.initRouter()
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.body.prepend(new Header().render());
-  const root = document.getElementById("app")!;
-
-  const router = new Router(root);
-
-  const appDeps: AppDeps = {
-    root,
-    router,
-    store: reactiveStore,
-    repositories: {
-      shoesRepository: ShoesRepo.init(reactiveStore),
-    },
-  };
-
-  new App(appDeps).run();
+  new App().run();
 });
